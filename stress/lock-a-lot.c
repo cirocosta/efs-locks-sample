@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -35,9 +36,11 @@ typedef struct runtime_t {
 void
 runtime_show(runtime_t* runtime)
 {
-	printf("Runtime:\n"
+	printf("\n"
+	       "Runtime:\n"
 	       "  BASE_DIRECTORY:  %s\n"
-	       "  NUMBER_OF_LOCKS: %d\n",
+	       "  NUMBER_OF_LOCKS: %d\n"
+	       "\n",
 	       runtime->base_directory,
 	       runtime->number_of_locks);
 }
@@ -57,7 +60,7 @@ create_file(const char* base, const int i)
 	lock.l_type = F_WRLCK;
 
 	err = asprintf(&filename, "%s/file%d", base, i);
-	if (err > 0) {
+	if (err == -1) {
 		fprintf(stderr, "Couldn't create name for file %d", i);
 		exit(1);
 	}
@@ -95,18 +98,22 @@ runtime_create_files(runtime_t* runtime)
 	       runtime->base_directory);
 
 	err = stat(runtime->base_directory, &st);
-	if (err == -1) {
+	if (err != -1) {
+		perror("stat");
 		fprintf(stderr,
-		        "Directory %s already exists."
-		        "Please delete it and rerun.",
+		        "ERROR:\n"
+		        "  Directory %s already exists.\n"
+		        "  Please delete it and rerun.\n",
 		        runtime->base_directory);
 		exit(1);
 	}
 
 	err = mkdir(runtime->base_directory, 0700);
 	if (err == -1) {
+		perror("mkdir");
 		fprintf(stderr,
-		        "Couldn't create directory %s",
+		        "ERROR:\n"
+		        "  Couldn't create directory %s\n",
 		        runtime->base_directory);
 		exit(1);
 	}
@@ -132,31 +139,26 @@ main(int argc, char** argv)
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
 
-	runtime_t runtime = {
-		.number_of_locks = 0, .base_directory = argv[2],
-	};
-
 	if (argc < 3) {
 		fprintf(stderr,
-		        "ERROR: Not enough argument specified\n"
-		        "usage: %s <number_of_locks> <directory>\n",
+		        "ERROR:\n"
+		        "  Not enough argument specified\n"
+		        "  usage: %s <number_of_locks> <directory>\n",
 		        argv[0]);
 		exit(1);
 	}
 
-	if (!isdigit(argv[1])) {
-		fprintf(stderr,
-		        "ERROR: First argument must be a non-negative "
-		        "number (number of locks).\n"
-		        "usage: %s <number_of_locks> <directory>\n",
-		        argv[0]);
-		exit(1);
-	}
-
-	runtime.number_of_locks = atoi(argv[1]);
+	runtime_t runtime = {
+		.number_of_locks = atoi(argv[1]), .base_directory = argv[2],
+	};
 
 	runtime_show(&runtime);
 	runtime_create_files(&runtime);
+
+	printf("File successfully created.\n");
+	printf("Waiting until signal.\n");
+
+	pause();
 
 	return 0;
 }
