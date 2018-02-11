@@ -1,0 +1,10 @@
+version: '3.3'
+services:
+  mysql:
+    container_name: 'inst1'
+    image: 'mysql'
+    environment:
+      - 'MYSQL_DATABASE=testdb'
+      - 'MYSQL_ALLOW_EMPTY_PASSWORD=true'
+    volumes:
+      - '/mnt/efs/mysql:/var/lib/mysql'
