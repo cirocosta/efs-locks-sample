@@ -14,9 +14,18 @@
 set -o errexit
 
 # main routine that calls the
-# table creation method 30 times
+# table creation method N times
 main() {
-  for i in $(seq 1 30); do
+  local number_of_tables="$1"
+
+  if [[ -z "$number_of_tables" ]]; then
+    echo "ERROR:
+  An argument (number of tables) must be supplied.
+    "
+    exit 1
+  fi
+
+  for i in $(seq 1 $number_of_tables); do
     create_table mytable$i
   done
 }
@@ -28,9 +37,9 @@ main() {
 create_table() {
   local name=$1
 
-  echo "CREATE TABLE $name ( 
-        id INT, 
-        data VARCHAR(100) 
+  echo "CREATE TABLE $name (
+        id INT,
+        data VARCHAR(100)
 );" | docker exec -i inst1 \
     mysql --database=testdb
 }
