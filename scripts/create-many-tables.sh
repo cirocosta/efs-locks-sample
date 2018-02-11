@@ -13,7 +13,6 @@
 
 set -o errexit
 
-
 # main routine that calls the
 # table creation method 30 times
 main() {
